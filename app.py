@@ -114,25 +114,14 @@ st.markdown("---")
 # ── Download ──────────────────────────────────────────
 st.subheader("⬇️ Download Data")
 
-all_cols = [c for c in ['Farmer Name', 'Village', 'Phone', 'Age',
-            'Acres', 'Ownership', 'Method', 'Enumerator',
-            'Date', 'Submitted At'] if c in filtered.columns]
-
-d1, d2 = st.columns([2, 1])
+d1, d2 = st.columns([1, 1])
 
 with d1:
-    selected_cols = st.multiselect(
-        "Select columns to include in download:",
-        options=all_cols,
-        default=all_cols
-    )
-
-with d2:
     fmt = st.selectbox("Format:", ["CSV", "Excel", "JSON"])
 
-if selected_cols:
-    export_df = filtered[selected_cols].copy()
-    export_df = export_df.reset_index()
+with d2:
+    st.write("")
+    export_df = filtered[display_cols].copy().reset_index()
     if 'Phone' in export_df.columns:
         export_df['Phone'] = export_df['Phone'].astype(str)
 
