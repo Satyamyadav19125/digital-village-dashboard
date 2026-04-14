@@ -141,8 +141,16 @@ st.dataframe(
 # ── Export ────────────────────────────────────────────
 st.markdown("---")
 
-# Fix formatting before export
-export_df = filtered[display_cols].copy()
+export_option = st.radio(
+    "Download options:",
+    ["Key columns only (11 columns)", "All columns (full data, 70 columns)"]
+)
+
+if export_option == "Key columns only (11 columns)":
+    export_df = filtered[display_cols].copy()
+else:
+    export_df = filtered.copy()
+
 if 'ID' in export_df.columns:
     export_df['ID'] = export_df['ID'].astype(str)
 if 'Phone' in export_df.columns:
