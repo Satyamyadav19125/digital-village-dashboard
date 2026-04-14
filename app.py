@@ -13,10 +13,12 @@ st.set_page_config(
 # ── Database connection ───────────────────────────────
 @st.cache_resource
 def get_engine():
+    host = st.secrets["DB_HOST"]
+    name = st.secrets["DB_NAME"]
+    user = st.secrets["DB_USER"]
+    pwd  = st.secrets["DB_PASS"]
     return create_engine(
-        "postgresql://postgres:DigitalVillage2023@"
-        "digital-village.cpswyukogpnf.eu-north-1.rds.amazonaws.com"
-        ":5432/postgres"
+        f"postgresql://{user}:{pwd}@{host}:5432/{name}"
     )
 
 @st.cache_data(ttl=60)
