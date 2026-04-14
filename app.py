@@ -32,14 +32,10 @@ col_map = {
     'Demography/Education':          'Education',
     'Facres/Acres':                  'Acres',
     'Acerage/Own':                   'Ownership',
-    'Consent/Studyagree':            'Study Agreement',
     'Consent/TPR_DSR':               'Method',
     '_submission_time':              'Submitted At',
 }
 df_display = df.rename(columns=col_map)
-
-# Add sequential row number
-df_display.insert(0, 'No.', range(1, len(df_display) + 1))
 
 # ── Header ────────────────────────────────────────────
 st.title("🌾 Digital Village Project")
@@ -96,70 +92,64 @@ if search_name:
 if search_phone:
     filtered = filtered[filtered['Phone'].astype(str).str.contains(search_phone, na=False)]
 
-st.caption(f"Showing {len(filtered)} of {len(df_display)} records")
-st.markdown("---")
+# Sort and add clean serial number
+if 'Submitted At' in filtered.columns:
+    filtered = filtered.sort_values('Submitted At', ascending=False)
+filtered = filtered.reset_index(drop=True)
+filtered.index = filtered.index + 1
+filtered.index.name = 'No.'
 
-# ── Column selector ───────────────────────────────────
+st.caption(f"Showing {len(filtered)} of {len(df_display)} records")
+
+# ── Data table ────────────────────────────────────────
 st.subheader("📋 Farm Registrations")
 
-all_cols = ['No.', 'Farmer Name', 'Village', 'Phone', 'Age',
-            'Acres', 'Ownership', 'Method', 'Enumerator', 'Date', 'Submitted At']
-all_cols = [c for c in all_cols if c in filtered.columns]
+display_cols = [c for c in ['Farmer Name', 'Village', 'Phone', 'Age',
+                'Acres', 'Ownership', 'Method', 'Enumerator',
+                'Date', 'Submitted At'] if c in filtered.columns]
 
-st.markdown("**Select columns to show:**")
-cols_per_row = 4
-rows = [all_cols[i:i+cols_per_row] for i in range(0, len(all_cols), cols_per_row)]
-selected_cols = []
-for row in rows:
-    check_cols = st.columns(len(row))
-    for i, col_name in enumerate(row):
-        if check_cols[i].checkbox(col_name, value=True, key=f"col_{col_name}"):
-            selected_cols.append(col_name)
-
-if not selected_cols:
-    st.warning("Please select at least one column.")
-    selected_cols = all_cols
-
-# Show table
-show_df = filtered[selected_cols]
-if 'Submitted At' in show_df.columns:
-    show_df = show_df.sort_values('Submitted At', ascending=False)
-
-st.dataframe(show_df, use_container_width=True, height=400)
+st.dataframe(filtered[display_cols], use_container_width=True, height=400)
 st.markdown("---")
 
-# ── Export ────────────────────────────────────────────
+# ── Download ──────────────────────────────────────────
 st.subheader("⬇️ Download Data")
 
-# Format columns for export
-export_df = show_df.copy()
-if 'Phone' in export_df.columns:
-    export_df['Phone'] = export_df['Phone'].astype(str)
+all_cols = [c for c in ['Farmer Name', 'Village', 'Phone', 'Age',
+            'Acres', 'Ownership', 'Method', 'Enumerator',
+            'Date', 'Submitted At'] if c in filtered.columns]
 
-col_fmt, col_btn = st.columns([1, 2])
+d1, d2 = st.columns([2, 1])
 
-with col_fmt:
-    fmt = st.selectbox("Select export format:", ["CSV", "Excel (XLS)", "JSON"])
+with d1:
+    selected_cols = st.multiselect(
+        "Select columns to include in download:",
+        options=all_cols,
+        default=all_cols
+    )
 
-with col_btn:
-    st.write("")
-    st.write("")
+with d2:
+    fmt = st.selectbox("Format:", ["CSV", "Excel", "JSON"])
+
+if selected_cols:
+    export_df = filtered[selected_cols].copy()
+    export_df = export_df.reset_index()
+    if 'Phone' in export_df.columns:
+        export_df['Phone'] = export_df['Phone'].astype(str)
+
     if fmt == "CSV":
-        csv = export_df.to_csv(index=False).encode('utf-8')
-        st.download_button("⬇️ Download CSV", data=csv,
-                           file_name="farm_registrations.csv", mime="text/csv")
-
-    elif fmt == "Excel (XLS)":
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-            export_df.to_excel(writer, index=False, sheet_name='Farm Registrations')
-        st.download_button("⬇️ Download Excel", data=buffer.getvalue(),
-                           file_name="farm_registrations.xlsx",
+        data = export_df.to_csv(index=False).encode('utf-8')
+        st.download_button("⬇️ Download", data=data,
+                           file_name="farms.csv", mime="text/csv")
+    elif fmt == "Excel":
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine='openpyxl') as w:
+            export_df.to_excel(w, index=False, sheet_name='Farms')
+        st.download_button("⬇️ Download", data=buf.getvalue(),
+                           file_name="farms.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
     elif fmt == "JSON":
-        json_data = export_df.to_json(orient='records', indent=2).encode('utf-8')
-        st.download_button("⬇️ Download JSON", data=json_data,
-                           file_name="farm_registrations.json", mime="application/json")
+        data = export_df.to_json(orient='records', indent=2).encode('utf-8')
+        st.download_button("⬇️ Download", data=data,
+                           file_name="farms.json", mime="application/json")
 
 st.caption("Data refreshes every 60 seconds from AWS database.")
