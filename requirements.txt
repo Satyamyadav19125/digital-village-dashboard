@@ -4,4 +4,4 @@ sqlalchemy==2.0.49
 pandas
 plotly
 openpyxl
-folium 
+folium==0.14.0
