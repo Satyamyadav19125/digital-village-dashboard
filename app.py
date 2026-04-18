@@ -8,10 +8,11 @@ st.set_page_config(page_title="Digital Village Project", page_icon="🌾", layou
 
 @st.cache_resource
 def get_engine():
-    host = st.secrets["DB_HOST"]
-    name = st.secrets["DB_NAME"]
-    user = st.secrets["DB_USER"]
-    pwd  = st.secrets["DB_PASS"]
+    import os
+    host = os.environ.get("DB_HOST") or st.secrets.get("DB_HOST")
+    name = os.environ.get("DB_NAME") or st.secrets.get("DB_NAME")
+    user = os.environ.get("DB_USER") or st.secrets.get("DB_USER")
+    pwd  = os.environ.get("DB_PASS") or st.secrets.get("DB_PASS")
     return create_engine(f"postgresql://{user}:{pwd}@{host}:5432/{name}")
 
 @st.cache_data(ttl=60)
