@@ -229,7 +229,6 @@ if 'view_farmer_idx' in st.session_state:
         with right:
             st.markdown("##### 🗺️ Farm Location")
 
-            # ── Get this farmer's data ─────────────────
             name_r      = clean(raw_row.get('Demography/Namefarmer'))
             phone_r     = clean(raw_row.get('Demography/phnofarmer'))
             age_r       = clean(raw_row.get('Demography/agefarmer'))
@@ -266,25 +265,7 @@ if 'view_farmer_idx' in st.session_state:
             ).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
-            # ── Polygon popup — ONLY this farmer ──────
-            poly_popup_html = f"""
-            <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
-                <div style="background:#2d6a4f;color:white;padding:8px 12px">
-                    <b style="font-size:13px">🌾 {name_r}</b>
-                </div>
-                <div style="padding:10px 12px;background:#f9f9f9;border:1px solid #ddd;border-top:none">
-                    <table style="width:100%;border-collapse:collapse">
-                        <tr><td style="color:#666;padding:3px 0;width:45%">📍 Village</td><td><b>{village_r}</b></td></tr>
-                        <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">🎂 Age</td><td>{age_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td><b>{acres_r}</b></td></tr>
-                        <tr><td style="color:#666;padding:3px 0">🏠 Ownership</td><td>{ownership_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">💧 Method</td><td><b style="color:#2d6a4f">{method_r}</b></td></tr>
-                    </table>
-                </div>
-            </div>"""
-
-            # ── Tubewell popup — ONLY this farmer ─────
+            # ── Tubewell popup ────────────────────────
             tw_popup_html = f"""
             <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                 <div style="background:#1d3557;color:white;padding:8px 12px">
@@ -304,28 +285,27 @@ if 'view_farmer_idx' in st.session_state:
                 </div>
             </div>"""
 
-            # ── Draw ONLY this farmer's polygon ───────
+            # ── Draw polygon — tooltip only, NO popup ─
             if points:
                 folium.Polygon(
                     locations=points,
                     color='#2d6a4f', fill=True,
                     fill_color='#52b788', fill_opacity=0.5, weight=3,
-                    popup=folium.Popup(poly_popup_html, max_width=240),
-                    tooltip=f"🌾 {name_r}'s Farm"
+                    tooltip=f"🌾 {name_r} | {village_r} | {acres_r} ac | {method_r}"
                 ).add_to(mini_m)
                 mini_m.fit_bounds([
                     [min(p[0] for p in points), min(p[1] for p in points)],
                     [max(p[0] for p in points), max(p[1] for p in points)]
                 ])
             else:
-                st.caption("No polygon data for this farm")
+                st.caption("📍 No polygon data for this farm")
 
-            # ── Draw ONLY this farmer's tubewell ──────
+            # ── Draw tubewell — with popup ─────────────
             if tw_loc:
                 folium.Marker(
                     location=tw_loc,
                     popup=folium.Popup(tw_popup_html, max_width=240),
-                    tooltip=f"🔧 {name_r}'s Tubewell",
+                    tooltip=f"🔧 {name_r}'s Tubewell — click for details",
                     icon=folium.Icon(color='blue', icon='tint', prefix='fa')
                 ).add_to(mini_m)
 
