@@ -176,7 +176,7 @@ with tab2:
 # ── TAB 3: Farm Map ───────────────────────────────────
 with tab3:
     st.subheader("🗺️ Farm Map — Polygon View")
-    st.caption("Green polygons = farm boundaries. Click any farm to see details.")
+    st.caption("Green polygons = farm boundaries. Blue markers = tubewells. Click any farm or tubewell to see details.")
 
     def parse_polygon(poly_str):
         if not poly_str or str(poly_str) == 'None' or str(poly_str) == 'nan':
@@ -192,40 +192,142 @@ with tab3:
         except:
             return None
 
-    # Build map
-    m = folium.Map(location=[30.7, 76.7], zoom_start=10)
+    def parse_point(loc_str):
+        if not loc_str or str(loc_str) == 'None' or str(loc_str) == 'nan':
+            return None
+        try:
+            parts = str(loc_str).strip().split()
+            if len(parts) >= 2:
+                return float(parts[0]), float(parts[1])
+        except:
+            return None
+
+    def clean(val, fallback="—"):
+        if val is None or str(val) == 'nan' or str(val) == 'None':
+            return fallback
+        return str(val)
+
+    # ── Build map with satellite + street toggle ──────
+    m = folium.Map(location=[30.7, 76.7], zoom_start=11)
+
+    # Street layer
+    folium.TileLayer(
+        tiles='OpenStreetMap',
+        name='🗺️ Street Map',
+        control=True
+    ).add_to(m)
+
+    # Satellite layer
+    folium.TileLayer(
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr='Esri',
+        name='🛰️ Satellite',
+        control=True
+    ).add_to(m)
 
     farms_drawn = 0
+    tubewells_drawn = 0
+
     for _, row in df.iterrows():
+        name     = clean(row.get('Demography/Namefarmer'))
+        village  = clean(row.get('inthebeginning/Village'))
+        phone    = clean(row.get('Demography/phnofarmer'))
+        age      = clean(row.get('Demography/agefarmer'))
+        acres    = clean(row.get('Facres/Acres'))
+        ownership= clean(row.get('Acerage/Own'))
+        method   = clean(row.get('Consent/TPR_DSR'))
+        tubewells= clean(row.get('Tubewells/Tubewells_001'))
+        pump     = clean(row.get('Tubewells/pump1'))
+        bd       = clean(row.get('Tubewells/BD1'))
+        gwl      = clean(row.get('GWL_001/GWL'))
+        tubeshare= clean(row.get('GWL_001/Tubeshare'))
+
+        # ── Farmer card popup ─────────────────────────
+        popup_html = f"""
+        <div style="font-family: Arial, sans-serif; width: 240px; font-size: 13px;">
+
+            <div style="background: #2d6a4f; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0;">
+                <b style="font-size: 15px;">🌾 {name}</b>
+            </div>
+
+            <div style="padding: 10px 12px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px;">
+
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr><td style="color:#666; padding: 3px 0;">📍 Village</td>
+                        <td style="font-weight:bold;">{village}</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">📞 Phone</td>
+                        <td>{phone}</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">🎂 Age</td>
+                        <td>{age}</td></tr>
+                    <tr><td colspan="2"><hr style="margin: 5px 0; border-color: #eee;"></td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">🌾 Acres</td>
+                        <td style="font-weight:bold;">{acres}</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">🏠 Ownership</td>
+                        <td>{ownership}</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">💧 Method</td>
+                        <td><b style="color: #2d6a4f;">{method}</b></td></tr>
+                    <tr><td colspan="2"><hr style="margin: 5px 0; border-color: #eee;"></td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">🔧 Tubewells</td>
+                        <td>{tubewells}</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">⚙️ Pump</td>
+                        <td>{pump}</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">📏 Bore Depth</td>
+                        <td>{bd} ft</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">💦 GWL</td>
+                        <td>{gwl} ft</td></tr>
+                    <tr><td style="color:#666; padding: 3px 0;">🤝 Tube Share</td>
+                        <td>{tubeshare}</td></tr>
+                </table>
+
+            </div>
+        </div>
+        """
+
+        # ── Draw farm polygon ─────────────────────────
         poly_str = row.get('Poly1/map1') or row.get('Poly2/map2') or row.get('Poly3/map3')
         points = parse_polygon(poly_str)
         if points:
-            name    = row.get('Demography/Namefarmer', 'Unknown')
-            village = row.get('inthebeginning/Village', 'Unknown')
-            acres   = row.get('Facres/Acres', 'Unknown')
-            method  = row.get('Consent/TPR_DSR', 'Unknown')
-
-            popup_html = f"""
-            <div style="font-family: Arial; width: 200px;">
-                <h4 style="color: green; margin: 0;">🌾 {name}</h4>
-                <hr style="margin: 5px 0;">
-                <b>Village:</b> {village}<br>
-                <b>Acres:</b> {acres}<br>
-                <b>Method:</b> {method}
-            </div>
-            """
             folium.Polygon(
                 locations=points,
-                color='green',
+                color='#2d6a4f',
                 fill=True,
-                fill_color='lightgreen',
+                fill_color='#52b788',
                 fill_opacity=0.4,
                 weight=2,
-                popup=folium.Popup(popup_html, max_width=250)
+                popup=folium.Popup(popup_html, max_width=270)
             ).add_to(m)
             farms_drawn += 1
 
-    st.caption(f"Showing {farms_drawn} farms with polygon data")
+        # ── Draw tubewell marker ──────────────────────
+        tube_loc = parse_point(row.get('LocateTubewell/Tubeloc'))
+        if tube_loc:
+            tube_popup = f"""
+            <div style="font-family: Arial; width: 200px; font-size: 13px;">
+                <div style="background: #1d3557; color: white; padding: 6px 10px; border-radius: 6px 6px 0 0;">
+                    <b>🔧 Tubewell</b> — {name}
+                </div>
+                <div style="padding: 8px 10px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px;">
+                    <b>Village:</b> {village}<br>
+                    <b>Tubewells:</b> {tubewells}<br>
+                    <b>Pump:</b> {pump}<br>
+                    <b>Bore Depth:</b> {bd} ft<br>
+                    <b>GWL:</b> {gwl} ft<br>
+                    <b>Sharing:</b> {tubeshare}
+                </div>
+            </div>
+            """
+            folium.Marker(
+                location=tube_loc,
+                popup=folium.Popup(tube_popup, max_width=220),
+                tooltip=f"🔧 {name}'s Tubewell",
+                icon=folium.Icon(color='blue', icon='tint', prefix='fa')
+            ).add_to(m)
+            tubewells_drawn += 1
+
+    # Layer control (toggle satellite/street)
+    folium.LayerControl(position='topright').add_to(m)
+
+    st.caption(f"🌾 {farms_drawn} farm polygons | 🔧 {tubewells_drawn} tubewells")
     components.html(m._repr_html_(), height=600)
 
 st.caption("Data refreshes every 60 seconds from AWS database.")
