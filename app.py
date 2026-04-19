@@ -210,15 +210,15 @@ if 'view_farmer_idx' in st.session_state:
                 hp1, mm1 = parse_pump(clean(raw_row.get('Tubewells/pump1','—')))
                 hp2, mm2 = parse_pump(clean(raw_row.get('Tubewells/pump2','—')))
                 for k, v in {
-                    "🔧 No. Tubewells":      clean(raw_row.get('Tubewells/Tubewells_001','—')),
-                    "⚙️ Horsepower 1":       hp1,
-                    "📏 Delivery MM 1":      mm1,
-                    "📐 Bore Depth 1":       clean(raw_row.get('Tubewells/BD1','—')) + " ft",
-                    "⚙️ Horsepower 2":       hp2,
-                    "📏 Delivery MM 2":      mm2,
-                    "📐 Bore Depth 2":       clean(raw_row.get('Tubewells/BD2','—')) + " ft",
-                    "💦 Ground Water Level": clean(raw_row.get('GWL_001/GWL','—')) + " ft",
-                    "🤝 Tube Share":         clean(raw_row.get('GWL_001/Tubeshare','—')),
+                    "🔧 No. Tubewells":  clean(raw_row.get('Tubewells/Tubewells_001','—')),
+                    "⚙️ Horsepower 1":   hp1,
+                    "📏 Delivery MM 1":  mm1,
+                    "📐 Bore Depth 1":   clean(raw_row.get('Tubewells/BD1','—')) + " ft",
+                    "⚙️ Horsepower 2":   hp2,
+                    "📏 Delivery MM 2":  mm2,
+                    "📐 Bore Depth 2":   clean(raw_row.get('Tubewells/BD2','—')) + " ft",
+                    "💦 Water Level":    clean(raw_row.get('GWL_001/GWL','—')) + " ft",
+                    "🤝 Tube Share":     clean(raw_row.get('GWL_001/Tubeshare','—')),
                 }.items():
                     if '—' not in v:
                         st.markdown(f"**{k}:** {v}")
@@ -293,7 +293,7 @@ if 'view_farmer_idx' in st.session_state:
                             <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{hp_r}</td></tr>
                             <tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{mm_r}</td></tr>
                             <tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr>
-                            <tr><td style="color:#666;padding:3px 0">💦 Ground Water Level</td><td>{gwl_r} ft</td></tr>
+                            <tr><td style="color:#666;padding:3px 0">💦 Water Level</td><td>{gwl_r} ft</td></tr>
                         </table>
                     </div>
                 </div>"""
