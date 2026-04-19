@@ -207,8 +207,7 @@ if 'view_farmer_idx' in st.session_state:
                 "📅 Date":       clean(farmer_display.get('Date','—')),
                 "🕐 Submitted":  clean(farmer_display.get('Submitted At','—')),
             }.items():
-                if v != '—':
-                    st.markdown(f"**{k}:** {v}")
+                st.markdown(f"**{k}:** {v}")
 
             st.markdown("##### 🔧 Tubewell Details")
             hp1, mm1 = parse_pump(clean(raw_row.get('Tubewells/pump1','—')))
@@ -266,6 +265,7 @@ if 'view_farmer_idx' in st.session_state:
             ).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
+            # ── Tubewell popup ────────────────────────
             tw_popup_html = f"""
             <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                 <div style="background:#1d3557;color:white;padding:8px 12px">
@@ -285,6 +285,7 @@ if 'view_farmer_idx' in st.session_state:
                 </div>
             </div>"""
 
+            # ── Draw polygon — tooltip only, NO popup ─
             if points:
                 folium.Polygon(
                     locations=points,
@@ -299,6 +300,7 @@ if 'view_farmer_idx' in st.session_state:
             else:
                 st.caption("📍 No polygon data for this farm")
 
+            # ── Draw tubewell — with popup ─────────────
             if tw_loc:
                 folium.Marker(
                     location=tw_loc,
