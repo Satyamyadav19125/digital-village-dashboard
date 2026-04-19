@@ -73,7 +73,6 @@ def parse_pump(pump_str):
 
 # ── Load data ─────────────────────────────────────────
 df = load_data()
-# Keep a clean integer position index for safe lookups
 df_indexed = df.reset_index(drop=True)
 
 col_map = {
@@ -149,8 +148,7 @@ if search_phone:
 if 'Submitted At' in filtered.columns:
     filtered = filtered.sort_values('Submitted At', ascending=False)
 
-# ── IMPORTANT: store original df_indexed position before resetting index ──
-filtered['_orig_pos'] = filtered.index  # save original integer position
+filtered['_orig_pos'] = filtered.index
 filtered = filtered.reset_index(drop=True)
 filtered.index = filtered.index + 1
 filtered.index.name = 'No.'
@@ -185,10 +183,8 @@ if 'view_farmer_idx' in st.session_state:
     if row_idx < len(filtered):
         farmer_display = filtered.iloc[row_idx]
         farmer_name    = clean(farmer_display.get('Farmer Name', 'Unknown'))
-
-        # ── Correct raw row lookup using saved original position ──
-        orig_pos = int(farmer_display['_orig_pos'])
-        raw_row  = df_indexed.iloc[orig_pos]
+        orig_pos       = int(farmer_display['_orig_pos'])
+        raw_row        = df_indexed.iloc[orig_pos]
 
         st.markdown("---")
         st.subheader(f"🌾 Farm Profile — {farmer_name}")
@@ -232,6 +228,20 @@ if 'view_farmer_idx' in st.session_state:
 
         with right:
             st.markdown("##### 🗺️ Farm Location")
+
+            # ── Get this farmer's data ─────────────────
+            name_r      = clean(raw_row.get('Demography/Namefarmer'))
+            phone_r     = clean(raw_row.get('Demography/phnofarmer'))
+            age_r       = clean(raw_row.get('Demography/agefarmer'))
+            acres_r     = clean(raw_row.get('Facres/Acres'))
+            village_r   = clean(raw_row.get('inthebeginning/Village'))
+            ownership_r = clean(raw_row.get('Acerage/Own'))
+            method_r    = clean(raw_row.get('Consent/TPR_DSR'))
+            pump_r      = clean(raw_row.get('Tubewells/pump1'))
+            bd_r        = clean(raw_row.get('Tubewells/BD1'))
+            gwl_r       = clean(raw_row.get('GWL_001/GWL'))
+            hp_r, mm_r  = parse_pump(pump_r)
+
             poly_str = raw_row.get('Poly1/map1') or raw_row.get('Poly2/map2') or raw_row.get('Poly3/map3')
             points   = parse_polygon(poly_str)
             tw_loc   = parse_point(raw_row.get('LocateTubewell/Tubeloc'))
@@ -256,18 +266,7 @@ if 'view_farmer_idx' in st.session_state:
             ).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
-            name_r      = clean(raw_row.get('Demography/Namefarmer'))
-            phone_r     = clean(raw_row.get('Demography/phnofarmer'))
-            age_r       = clean(raw_row.get('Demography/agefarmer'))
-            acres_r     = clean(raw_row.get('Facres/Acres'))
-            village_r   = clean(raw_row.get('inthebeginning/Village'))
-            ownership_r = clean(raw_row.get('Acerage/Own'))
-            method_r    = clean(raw_row.get('Consent/TPR_DSR'))
-            pump_r      = clean(raw_row.get('Tubewells/pump1'))
-            bd_r        = clean(raw_row.get('Tubewells/BD1'))
-            gwl_r       = clean(raw_row.get('GWL_001/GWL'))
-            hp_r, mm_r  = parse_pump(pump_r)
-
+            # ── Polygon popup — ONLY this farmer ──────
             poly_popup_html = f"""
             <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                 <div style="background:#2d6a4f;color:white;padding:8px 12px">
@@ -285,6 +284,7 @@ if 'view_farmer_idx' in st.session_state:
                 </div>
             </div>"""
 
+            # ── Tubewell popup — ONLY this farmer ─────
             tw_popup_html = f"""
             <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                 <div style="background:#1d3557;color:white;padding:8px 12px">
@@ -304,11 +304,12 @@ if 'view_farmer_idx' in st.session_state:
                 </div>
             </div>"""
 
+            # ── Draw ONLY this farmer's polygon ───────
             if points:
                 folium.Polygon(
                     locations=points,
                     color='#2d6a4f', fill=True,
-                    fill_color='#52b788', fill_opacity=0.5, weight=2,
+                    fill_color='#52b788', fill_opacity=0.5, weight=3,
                     popup=folium.Popup(poly_popup_html, max_width=240),
                     tooltip=f"🌾 {name_r}'s Farm"
                 ).add_to(mini_m)
@@ -316,7 +317,10 @@ if 'view_farmer_idx' in st.session_state:
                     [min(p[0] for p in points), min(p[1] for p in points)],
                     [max(p[0] for p in points), max(p[1] for p in points)]
                 ])
+            else:
+                st.caption("No polygon data for this farm")
 
+            # ── Draw ONLY this farmer's tubewell ──────
             if tw_loc:
                 folium.Marker(
                     location=tw_loc,
