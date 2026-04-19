@@ -189,27 +189,27 @@ if 'view_farmer_idx' in st.session_state:
         st.markdown("---")
         st.subheader(f"🌾 Farm Profile — {farmer_name}")
 
+        i1, i2, i3, i4 = st.columns(4)
+        i1.metric("Village",   clean(farmer_display.get('Village','—')))
+        i2.metric("Acres",     clean(farmer_display.get('Acres','—')))
+        i3.metric("Method",    clean(farmer_display.get('Method','—')))
+        i4.metric("Ownership", clean(farmer_display.get('Ownership','—')))
+
         left, right = st.columns([1, 1.5])
 
         with left:
-            # ── Farmer Details ────────────────────────
             st.markdown("##### 👤 Farmer Details")
             for k, v in {
-                "👤 Farmer Name":  clean(farmer_display.get('Farmer Name','—')),
-                "📞 Phone":        clean(farmer_display.get('Phone','—')),
-                "🎂 Age":          clean(farmer_display.get('Age','—')),
-                "🎓 Education":    clean(farmer_display.get('Education','—')),
-                "💧 Method":       clean(farmer_display.get('Method','—')),
-                "🌾 Acres":        clean(farmer_display.get('Acres','—')),
-                "🏠 Ownership":    clean(farmer_display.get('Ownership','—')),
-                "📍 Village":      clean(farmer_display.get('Village','—')),
+                "📞 Phone":      clean(farmer_display.get('Phone','—')),
+                "🎂 Age":        clean(farmer_display.get('Age','—')),
+                "🎓 Education":  clean(farmer_display.get('Education','—')),
+                "👷 Enumerator": clean(farmer_display.get('Enumerator','—')),
+                "📅 Date":       clean(farmer_display.get('Date','—')),
+                "🕐 Submitted":  clean(farmer_display.get('Submitted At','—')),
             }.items():
                 if v != '—':
                     st.markdown(f"**{k}:** {v}")
 
-            st.markdown("")
-
-            # ── Tubewell Details ──────────────────────
             st.markdown("##### 🔧 Tubewell Details")
             hp1, mm1 = parse_pump(clean(raw_row.get('Tubewells/pump1','—')))
             hp2, mm2 = parse_pump(clean(raw_row.get('Tubewells/pump2','—')))
@@ -266,7 +266,6 @@ if 'view_farmer_idx' in st.session_state:
             ).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
-            # ── Tubewell popup ────────────────────────
             tw_popup_html = f"""
             <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                 <div style="background:#1d3557;color:white;padding:8px 12px">
@@ -286,7 +285,6 @@ if 'view_farmer_idx' in st.session_state:
                 </div>
             </div>"""
 
-            # ── Polygon — tooltip only, no popup ──────
             if points:
                 folium.Polygon(
                     locations=points,
@@ -301,7 +299,6 @@ if 'view_farmer_idx' in st.session_state:
             else:
                 st.caption("📍 No polygon data for this farm")
 
-            # ── Tubewell marker with popup ─────────────
             if tw_loc:
                 folium.Marker(
                     location=tw_loc,
