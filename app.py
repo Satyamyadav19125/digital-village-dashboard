@@ -57,6 +57,24 @@ def clean(val):
     s = str(val) if val is not None else ''
     return '—' if s in ('nan','None','') else s
 
+def parse_pump(pump_str):
+    """Parse '12_5_to_17_horsepower 80mm_width' into (hp, mm)"""
+    if not pump_str or pump_str == '—': return '—', '—'
+    try:
+        raw = str(pump_str).lower()
+        parts = raw.split()
+        hp_part = next((p for p in parts if 'horsepower' in p or ('hp' in p and 'mm' not in p)), '')
+        mm_part = next((p for p in parts if 'mm' in p), '')
+        # Clean HP
+        hp = hp_part.replace('_horsepower','').replace('horsepower','').replace('_hp_to_','_to_').replace('_hp','')
+        hp = hp.replace('_to_',' to ').replace('_',' ').strip()
+        hp = hp.replace('12 5','12.5').replace('17 5','17.5').replace('7 5','7.5').replace('22 5','22.5')
+        # Clean MM
+        mm = mm_part.replace('_width','').replace('width','').strip()
+        return (hp or '—'), (mm or '—')
+    except:
+        return '—', '—'
+
 df = load_data()
 
 col_map = {
@@ -153,7 +171,7 @@ selected = st.dataframe(
     selection_mode="single-row",
 )
 
-# ── Auto-open Farm Profile on single row click ────────
+# ── Auto-open Farm Profile on single row click ─────────
 selected_rows = selected.selection.rows if selected.selection else []
 if selected_rows:
     st.session_state['view_farmer_idx'] = selected_rows[0]
@@ -169,7 +187,6 @@ if 'view_farmer_idx' in st.session_state:
         st.markdown("---")
         st.subheader(f"🌾 Farm Profile — {farmer_name}")
 
-        # ── 4 metric cards ────────────────────────────
         i1, i2, i3, i4 = st.columns(4)
         i1.metric("Village",   clean(farmer_display.get('Village','—')))
         i2.metric("Acres",     clean(farmer_display.get('Acres','—')))
@@ -192,14 +209,18 @@ if 'view_farmer_idx' in st.session_state:
 
             if raw_row is not None:
                 st.markdown("##### 🔧 Tubewell Details")
+                hp1, mm1 = parse_pump(clean(raw_row.get('Tubewells/pump1','—')))
+                hp2, mm2 = parse_pump(clean(raw_row.get('Tubewells/pump2','—')))
                 for k, v in {
-                    "🔧 No. Tubewells": clean(raw_row.get('Tubewells/Tubewells_001','—')),
-                    "⚙️ Pump 1":        clean(raw_row.get('Tubewells/pump1','—')),
-                    "📏 Bore Depth 1":  clean(raw_row.get('Tubewells/BD1','—')) + " ft",
-                    "⚙️ Pump 2":        clean(raw_row.get('Tubewells/pump2','—')),
-                    "📏 Bore Depth 2":  clean(raw_row.get('Tubewells/BD2','—')) + " ft",
-                    "💦 GWL":           clean(raw_row.get('GWL_001/GWL','—')) + " ft",
-                    "🤝 Tube Share":    clean(raw_row.get('GWL_001/Tubeshare','—')),
+                    "🔧 No. Tubewells":      clean(raw_row.get('Tubewells/Tubewells_001','—')),
+                    "⚙️ Horsepower 1":       hp1,
+                    "📏 Delivery MM 1":      mm1,
+                    "📐 Bore Depth 1":       clean(raw_row.get('Tubewells/BD1','—')) + " ft",
+                    "⚙️ Horsepower 2":       hp2,
+                    "📏 Delivery MM 2":      mm2,
+                    "📐 Bore Depth 2":       clean(raw_row.get('Tubewells/BD2','—')) + " ft",
+                    "💦 Ground Water Level": clean(raw_row.get('GWL_001/GWL','—')) + " ft",
+                    "🤝 Tube Share":         clean(raw_row.get('GWL_001/Tubeshare','—')),
                 }.items():
                     if '—' not in v:
                         st.markdown(f"**{k}:** {v}")
@@ -207,7 +228,6 @@ if 'view_farmer_idx' in st.session_state:
         with right:
             st.markdown("##### 🗺️ Farm Location")
             if raw_row is not None:
-                # ── Build mini map ────────────────────
                 poly_str = raw_row.get('Poly1/map1') or raw_row.get('Poly2/map2') or raw_row.get('Poly3/map3')
                 points   = parse_polygon(poly_str)
                 tw_loc   = parse_point(raw_row.get('LocateTubewell/Tubeloc'))
@@ -242,8 +262,8 @@ if 'view_farmer_idx' in st.session_state:
                 pump_r      = clean(raw_row.get('Tubewells/pump1'))
                 bd_r        = clean(raw_row.get('Tubewells/BD1'))
                 gwl_r       = clean(raw_row.get('GWL_001/GWL'))
+                hp_r, mm_r  = parse_pump(pump_r)
 
-                # Polygon info card
                 poly_popup_html = f"""
                 <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                     <div style="background:#2d6a4f;color:white;padding:8px 12px">
@@ -261,7 +281,6 @@ if 'view_farmer_idx' in st.session_state:
                     </div>
                 </div>"""
 
-                # Tubewell info card
                 tw_popup_html = f"""
                 <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
                     <div style="background:#1d3557;color:white;padding:8px 12px">
@@ -269,13 +288,14 @@ if 'view_farmer_idx' in st.session_state:
                     </div>
                     <div style="padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none">
                         <table style="width:100%;border-collapse:collapse">
-                            <tr><td style="color:#666;padding:3px 0;width:45%">👤 Farmer</td><td><b>{name_r}</b></td></tr>
+                            <tr><td style="color:#666;padding:3px 0;width:50%">👤 Farmer</td><td><b>{name_r}</b></td></tr>
                             <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr>
                             <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td>{acres_r}</td></tr>
                             <tr><td style="color:#666;padding:3px 0">📍 Village</td><td>{village_r}</td></tr>
-                            <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{pump_r}</td></tr>
-                            <tr><td style="color:#666;padding:3px 0">📏 Bore Depth</td><td><b>{bd_r} ft</b></td></tr>
-                            <tr><td style="color:#666;padding:3px 0">💦 GWL</td><td>{gwl_r} ft</td></tr>
+                            <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{hp_r}</td></tr>
+                            <tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{mm_r}</td></tr>
+                            <tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr>
+                            <tr><td style="color:#666;padding:3px 0">💦 Ground Water Level</td><td>{gwl_r} ft</td></tr>
                         </table>
                     </div>
                 </div>"""
@@ -305,7 +325,6 @@ if 'view_farmer_idx' in st.session_state:
             else:
                 st.info("Map not available")
 
-        # ── Full form expander ────────────────────────
         if raw_row is not None:
             with st.expander("📋 View All Form Fields (70+ columns)"):
                 skip = {'_attachments','_geolocation','_notes','_tags',
@@ -419,6 +438,7 @@ for _, row in df.iterrows():
     pump      = cv(row.get('Tubewells/pump1'))
     bd        = cv(row.get('Tubewells/BD1'))
     gwl       = cv(row.get('GWL_001/GWL'))
+    _hp, _mm  = parse_pump(pump)
 
     poly_popup = f"""
     <div style="font-family:Arial,sans-serif;width:220px;font-size:13px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.15)">
@@ -444,13 +464,14 @@ for _, row in df.iterrows():
         </div>
         <div style="padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none">
             <table style="width:100%;border-collapse:collapse;font-size:12px">
-                <tr><td style="color:#666;padding:3px 0;width:45%">👤 Farmer</td><td><b>{name}</b></td></tr>
+                <tr><td style="color:#666;padding:3px 0;width:50%">👤 Farmer</td><td><b>{name}</b></td></tr>
                 <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone}</td></tr>
                 <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td>{acres}</td></tr>
                 <tr><td style="color:#666;padding:3px 0">📍 Village</td><td>{village}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{pump}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">📏 Bore Depth</td><td><b>{bd} ft</b></td></tr>
-                <tr><td style="color:#666;padding:3px 0">💦 GWL</td><td>{gwl} ft</td></tr>
+                <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{_hp}</td></tr>
+                <tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{_mm}</td></tr>
+                <tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd} ft</b></td></tr>
+                <tr><td style="color:#666;padding:3px 0">💦 Ground Water Level</td><td>{gwl} ft</td></tr>
             </table>
         </div>
     </div>"""
