@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 import plotly.express as px
 import io
 import folium
-import json
 import math
 import streamlit.components.v1 as components
 
@@ -58,18 +57,15 @@ def clean(val):
     return '—' if s in ('nan','None','') else s
 
 def parse_pump(pump_str):
-    """Parse '12_5_to_17_horsepower 80mm_width' into (hp, mm)"""
     if not pump_str or pump_str == '—': return '—', '—'
     try:
         raw = str(pump_str).lower()
         parts = raw.split()
         hp_part = next((p for p in parts if 'horsepower' in p or ('hp' in p and 'mm' not in p)), '')
         mm_part = next((p for p in parts if 'mm' in p), '')
-        # Clean HP
         hp = hp_part.replace('_horsepower','').replace('horsepower','').replace('_hp_to_','_to_').replace('_hp','')
         hp = hp.replace('_to_',' to ').replace('_',' ').strip()
         hp = hp.replace('12 5','12.5').replace('17 5','17.5').replace('7 5','7.5').replace('22 5','22.5')
-        # Clean MM
         mm = mm_part.replace('_width','').replace('width','').strip()
         return (hp or '—'), (mm or '—')
     except:
@@ -171,10 +167,12 @@ selected = st.dataframe(
     selection_mode="single-row",
 )
 
-# ── Auto-open Farm Profile on single row click ─────────
+# ── Auto-open Farm Profile on single row click ────────
 selected_rows = selected.selection.rows if selected.selection else []
 if selected_rows:
     st.session_state['view_farmer_idx'] = selected_rows[0]
+elif 'view_farmer_idx' in st.session_state:
+    del st.session_state['view_farmer_idx']
 
 if 'view_farmer_idx' in st.session_state:
     row_idx = st.session_state['view_farmer_idx']
@@ -339,10 +337,6 @@ if 'view_farmer_idx' in st.session_state:
                     use_container_width=True, height=400
                 )
 
-        if st.button("✖️ Close Profile", type="secondary"):
-            del st.session_state['view_farmer_idx']
-            st.rerun()
-
 st.markdown("---")
 
 # ── Download ──────────────────────────────────────────
@@ -389,116 +383,5 @@ with dtab2:
             st.download_button("⬇️ Download Full Data", data=buf2.getvalue(), file_name="farms_full.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         elif fmt2 == "JSON":
             st.download_button("⬇️ Download Full Data", data=export_full.to_json(orient='records', indent=2).encode('utf-8'), file_name="farms_full.json", mime="application/json")
-
-st.markdown("---")
-
-# ── Farm Map ──────────────────────────────────────────
-st.subheader("🗺️ Farm Map — Polygon View")
-st.caption("Green polygons = farm boundaries. Blue markers = tubewells. Click any farm or tubewell to see details.")
-
-def parse_polygon_m(poly_str):
-    if not poly_str or str(poly_str) in ('None','nan'): return None
-    try:
-        pts = []
-        for seg in str(poly_str).strip().split(';'):
-            p = seg.strip().split()
-            if len(p) >= 2: pts.append([float(p[0]), float(p[1])])
-        return pts if len(pts) >= 3 else None
-    except: return None
-
-def parse_point_m(loc_str):
-    if not loc_str or str(loc_str) in ('None','nan'): return None
-    try:
-        p = str(loc_str).strip().split()
-        return (float(p[0]), float(p[1])) if len(p) >= 2 else None
-    except: return None
-
-def cv(val):
-    s = str(val) if val is not None else ''
-    return '—' if s in ('nan','None','') else s
-
-m = folium.Map(location=[30.7, 76.7], zoom_start=11)
-folium.TileLayer(tiles='OpenStreetMap', name='🗺️ Street Map').add_to(m)
-folium.TileLayer(
-    tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attr='Esri', name='🛰️ Satellite'
-).add_to(m)
-
-farms_drawn = 0
-tubewells_drawn = 0
-
-for _, row in df.iterrows():
-    name      = cv(row.get('Demography/Namefarmer'))
-    village   = cv(row.get('inthebeginning/Village'))
-    phone     = cv(row.get('Demography/phnofarmer'))
-    age       = cv(row.get('Demography/agefarmer'))
-    acres     = cv(row.get('Facres/Acres'))
-    ownership = cv(row.get('Acerage/Own'))
-    method    = cv(row.get('Consent/TPR_DSR'))
-    pump      = cv(row.get('Tubewells/pump1'))
-    bd        = cv(row.get('Tubewells/BD1'))
-    gwl       = cv(row.get('GWL_001/GWL'))
-    _hp, _mm  = parse_pump(pump)
-
-    poly_popup = f"""
-    <div style="font-family:Arial,sans-serif;width:220px;font-size:13px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.15)">
-        <div style="background:#2d6a4f;color:white;padding:8px 12px">
-            <b style="font-size:14px">🌾 {name}</b>
-        </div>
-        <div style="padding:10px 12px;background:#f9f9f9;border:1px solid #ddd;border-top:none">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-                <tr><td style="color:#666;padding:3px 0;width:45%">📍 Village</td><td><b>{village}</b></td></tr>
-                <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">🎂 Age</td><td>{age}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td><b>{acres}</b></td></tr>
-                <tr><td style="color:#666;padding:3px 0">🏠 Ownership</td><td>{ownership}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">💧 Method</td><td><b style="color:#2d6a4f">{method}</b></td></tr>
-            </table>
-        </div>
-    </div>"""
-
-    tube_popup = f"""
-    <div style="font-family:Arial,sans-serif;width:220px;font-size:13px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.15)">
-        <div style="background:#1d3557;color:white;padding:8px 12px">
-            <b style="font-size:14px">🔧 Tubewell</b>
-        </div>
-        <div style="padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-                <tr><td style="color:#666;padding:3px 0;width:50%">👤 Farmer</td><td><b>{name}</b></td></tr>
-                <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td>{acres}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">📍 Village</td><td>{village}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{_hp}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{_mm}</td></tr>
-                <tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd} ft</b></td></tr>
-                <tr><td style="color:#666;padding:3px 0">💦 Ground Water Level</td><td>{gwl} ft</td></tr>
-            </table>
-        </div>
-    </div>"""
-
-    poly_str = row.get('Poly1/map1') or row.get('Poly2/map2') or row.get('Poly3/map3')
-    points = parse_polygon_m(poly_str)
-    if points:
-        folium.Polygon(
-            locations=points, color='#2d6a4f', fill=True,
-            fill_color='#52b788', fill_opacity=0.4, weight=2,
-            popup=folium.Popup(poly_popup, max_width=240),
-            tooltip=f"🌾 {name} | {village}"
-        ).add_to(m)
-        farms_drawn += 1
-
-    tube_loc = parse_point_m(row.get('LocateTubewell/Tubeloc'))
-    if tube_loc:
-        folium.Marker(
-            location=tube_loc,
-            popup=folium.Popup(tube_popup, max_width=240),
-            tooltip=f"🔧 {name}'s Tubewell",
-            icon=folium.Icon(color='blue', icon='tint', prefix='fa')
-        ).add_to(m)
-        tubewells_drawn += 1
-
-folium.LayerControl(position='topright').add_to(m)
-st.caption(f"🌾 {farms_drawn} farm polygons | 🔧 {tubewells_drawn} tubewells")
-components.html(m._repr_html_(), height=600)
 
 st.caption("Data refreshes every 60 seconds from AWS database.")
