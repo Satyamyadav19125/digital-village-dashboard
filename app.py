@@ -247,19 +247,60 @@ if 'view_farmer_idx' in st.session_state:
                 ctr = [30.7, 76.7]
 
             mini_m = folium.Map(location=ctr, zoom_start=16, tiles=None)
-            folium.TileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", attr="CARTO", name="🗺️ Street").add_to(mini_m)
-            folium.TileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr="Google", name="🛰️ Satellite", subdomains=["0","1","2","3"], max_zoom=21).add_to(mini_m)
+            folium.TileLayer(
+                "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+                attr="CARTO", name="🗺️ Street"
+            ).add_to(mini_m)
+            folium.TileLayer(
+                "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+                attr="Google", name="🛰️ Satellite",
+                subdomains=["0","1","2","3"], max_zoom=21
+            ).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
-            poly_popup_html = f"""<div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)"><div style="background:#2d6a4f;color:white;padding:8px 12px"><b style="font-size:13px">🌾 {name_r}</b></div><div style="padding:10px 12px;background:#f9f9f9;border:1px solid #ddd;border-top:none"><table style="width:100%;border-collapse:collapse"><tr><td style="color:#666;padding:3px 0;width:45%">📍 Village</td><td><b>{village_r}</b></td></tr><tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr><tr><td style="color:#666;padding:3px 0">🎂 Age</td><td>{age_r}</td></tr><tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td><b>{acres_r}</b></td></tr><tr><td style="color:#666;padding:3px 0">🏠 Ownership</td><td>{ownership_r}</td></tr><tr><td style="color:#666;padding:3px 0">💧 Method</td><td><b style="color:#2d6a4f">{method_r}</b></td></tr></table></div></div>"""
+            poly_popup_html = (
+                f"<div style='font-family:Arial,sans-serif;width:220px;font-size:12px;"
+                f"border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)'>"
+                f"<div style='background:#2d6a4f;color:white;padding:8px 12px'>"
+                f"<b style='font-size:13px'>🌾 {name_r}</b></div>"
+                f"<div style='padding:10px 12px;background:#f9f9f9;border:1px solid #ddd;border-top:none'>"
+                f"<table style='width:100%;border-collapse:collapse'>"
+                f"<tr><td style='color:#666;padding:3px 0;width:45%'>📍 Village</td><td><b>{village_r}</b></td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>📞 Phone</td><td>{phone_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>🎂 Age</td><td>{age_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>🌾 Acres</td><td><b>{acres_r}</b></td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>🏠 Ownership</td><td>{ownership_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>💧 Method</td>"
+                f"<td><b style='color:#2d6a4f'>{method_r}</b></td></tr>"
+                f"</table></div></div>"
+            )
 
-            tw_popup_html = f"""<div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)"><div style="background:#1d3557;color:white;padding:8px 12px"><b style="font-size:13px">🔧 Tubewell</b></div><div style="padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none"><table style="width:100%;border-collapse:collapse"><tr><td style="color:#666;padding:3px 0;width:50%">👤 Farmer</td><td><b>{name_r}</b></td></tr><tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr><tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td>{acres_r}</td></tr><tr><td style="color:#666;padding:3px 0">📍 Village</td><td>{village_r}</td></tr><tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{hp_r}</td></tr><tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{mm_r}</td></tr><tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr><tr><td style="color:#666;padding:3px 0">💦 Water Level</td><td>{gwl_r} ft</td></tr></table></div></div>"""
+            tw_popup_html = (
+                f"<div style='font-family:Arial,sans-serif;width:220px;font-size:12px;"
+                f"border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)'>"
+                f"<div style='background:#1d3557;color:white;padding:8px 12px'>"
+                f"<b style='font-size:13px'>🔧 Tubewell</b></div>"
+                f"<div style='padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none'>"
+                f"<table style='width:100%;border-collapse:collapse'>"
+                f"<tr><td style='color:#666;padding:3px 0;width:50%'>👤 Farmer</td><td><b>{name_r}</b></td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>📞 Phone</td><td>{phone_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>🌾 Acres</td><td>{acres_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>📍 Village</td><td>{village_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>⚙️ Horsepower</td><td>{hp_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>📏 Delivery MM</td><td>{mm_r}</td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>💦 Water Level</td><td>{gwl_r} ft</td></tr>"
+                f"</table></div></div>"
+            )
 
             if points:
                 folium.Polygon(
                     locations=points,
-                    color='#2d6a4f', fill=True,
-                    fill_color='#52b788', fill_opacity=0.5, weight=3,
+                    color='#2d6a4f',
+                    fill=True,
+                    fill_color='#52b788',
+                    fill_opacity=0.5,
+                    weight=3,
                     popup=folium.Popup(poly_popup_html, max_width=240),
                     tooltip=f"🌾 {name_r} | {village_r} | {acres_r} ac | {method_r}"
                 ).add_to(mini_m)
@@ -281,16 +322,21 @@ if 'view_farmer_idx' in st.session_state:
             components.html(mini_m._repr_html_(), height=400)
 
         with st.expander("📋 View All Form Fields (70+ columns)"):
-            skip = {'_attachments','_geolocation','_notes','_tags',
-                    '_validation_status','formhub/uuid','meta/instanceID',
-                    'meta/rootUuid','meta/deprecatedID','__version__',
-                    '_xform_id_string','_uuid','_submitted_by','_status','_orig_pos'}
-            all_data = {col: clean(raw_row.get(col,''))
-                        for col in df_indexed.columns
-                        if col not in skip and clean(raw_row.get(col,'')) != '—'}
+            skip = {
+                '_attachments', '_geolocation', '_notes', '_tags',
+                '_validation_status', 'formhub/uuid', 'meta/instanceID',
+                'meta/rootUuid', 'meta/deprecatedID', '__version__',
+                '_xform_id_string', '_uuid', '_submitted_by', '_status', '_orig_pos'
+            }
+            all_data = {
+                col: clean(raw_row.get(col,''))
+                for col in df_indexed.columns
+                if col not in skip and clean(raw_row.get(col,'')) != '—'
+            }
             st.dataframe(
                 pd.DataFrame(list(all_data.items()), columns=['Field','Value']),
-                use_container_width=True, height=400
+                use_container_width=True,
+                height=400
             )
 
 st.markdown("---")
