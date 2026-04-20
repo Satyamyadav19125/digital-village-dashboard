@@ -161,7 +161,7 @@ filtered.index.name = 'No.'
 st.caption(f"Showing {len(filtered)} of {len(df_display)} records")
 
 st.subheader("📋 Farm Registrations")
-st.caption("👆 Click any row to instantly view full farm profile — it will appear below the table")
+st.caption("👇 Click any row to instantly view full farm profile — it will appear below the table")
 
 display_cols = [c for c in ['Farmer Name', 'Village', 'Phone', 'Age',
                 'Acres', 'Ownership', 'Method', 'Enumerator',
