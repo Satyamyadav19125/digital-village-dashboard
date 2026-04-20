@@ -297,7 +297,7 @@ if 'view_farmer_idx' in st.session_state:
                 f"<tr><td style='color:#666;padding:3px 0'>📍 Village</td><td>{village_r}</td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>⚙️ Horsepower</td><td>{hp_r}</td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>📏 Delivery MM</td><td>{mm_r}</td></tr>"
-                f"<tr><td style='color:#666;padding:3px 0'>📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr>"
+                f"<tr><td style='color:#666;padding:3px 0'>📐 Bore Depth</td><td>{bd_r} ft</td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>💦 Water Level</td><td>{gwl_r} ft</td></tr>"
                 f"</table></div></div>"
             )
