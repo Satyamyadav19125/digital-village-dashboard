@@ -118,7 +118,17 @@ with c2:
         fig2 = px.pie(mc_df, values='Count', names='Method',
                       title='TPR vs DSR Distribution',
                       color_discrete_sequence=px.colors.sequential.Blues)
-        fig2.update_layout(height=400)
+        fig2.update_layout(
+            height=400,
+            legend=dict(
+                orientation="v",
+                yanchor="middle",
+                y=0.5,
+                xanchor="left",
+                x=1.0
+            ),
+            margin=dict(r=120)
+        )
         st.plotly_chart(fig2, use_container_width=True)
 st.markdown("---")
 
@@ -151,7 +161,7 @@ filtered.index.name = 'No.'
 st.caption(f"Showing {len(filtered)} of {len(df_display)} records")
 
 st.subheader("📋 Farm Registrations")
-st.caption("👆 Click any row to instantly view full farm profile below")
+st.caption("👆 Click any row to instantly view full farm profile — it will appear below the table")
 
 display_cols = [c for c in ['Farmer Name', 'Village', 'Phone', 'Age',
                 'Acres', 'Ownership', 'Method', 'Enumerator',
@@ -248,13 +258,13 @@ if 'view_farmer_idx' in st.session_state:
 
             mini_m = folium.Map(location=ctr, zoom_start=16, tiles=None)
             folium.TileLayer(
-                "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-                attr="CARTO", name="🗺️ Street"
-            ).add_to(mini_m)
-            folium.TileLayer(
                 "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                 attr="Google", name="🛰️ Satellite",
                 subdomains=["0","1","2","3"], max_zoom=21
+            ).add_to(mini_m)
+            folium.TileLayer(
+                "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+                attr="CARTO", name="🗺️ Street"
             ).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
@@ -284,7 +294,6 @@ if 'view_farmer_idx' in st.session_state:
                 f"<table style='width:100%;border-collapse:collapse'>"
                 f"<tr><td style='color:#666;padding:3px 0;width:50%'>👤 Farmer</td><td><b>{name_r}</b></td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>📞 Phone</td><td>{phone_r}</td></tr>"
-                f"<tr><td style='color:#666;padding:3px 0'>🌾 Acres</td><td>{acres_r}</td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>📍 Village</td><td>{village_r}</td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>⚙️ Horsepower</td><td>{hp_r}</td></tr>"
                 f"<tr><td style='color:#666;padding:3px 0'>📏 Delivery MM</td><td>{mm_r}</td></tr>"
