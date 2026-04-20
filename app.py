@@ -71,7 +71,6 @@ def parse_pump(pump_str):
     except:
         return '—', '—'
 
-# ── Load data ─────────────────────────────────────────
 df = load_data()
 df_indexed = df.reset_index(drop=True)
 
@@ -90,12 +89,10 @@ col_map = {
 }
 df_display = df_indexed.rename(columns=col_map)
 
-# ── Header ────────────────────────────────────────────
 st.title("🌾 Digital Village Project")
 st.markdown("**Tel Aviv University | Thapar University, Patiala**")
 st.markdown("---")
 
-# ── Summary cards ─────────────────────────────────────
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Total Farms", len(df_indexed))
 col2.metric("Villages", df_display['Village'].nunique() if 'Village' in df_display else "—")
@@ -103,7 +100,6 @@ col3.metric("Blocks", df_display['Village'].nunique() if 'Village' in df_display
 col4.metric("Latest Submission", str(df_display['Submitted At'].max())[:10] if 'Submitted At' in df_display else "—")
 st.markdown("---")
 
-# ── Overview Charts ───────────────────────────────────
 st.subheader("📊 Overview Charts")
 c1, c2 = st.columns(2)
 with c1:
@@ -126,7 +122,6 @@ with c2:
         st.plotly_chart(fig2, use_container_width=True)
 st.markdown("---")
 
-# ── Filter & Search ───────────────────────────────────
 st.subheader("🔍 Filter & Search")
 f1, f2, f3 = st.columns(3)
 with f1:
@@ -155,7 +150,6 @@ filtered.index.name = 'No.'
 
 st.caption(f"Showing {len(filtered)} of {len(df_display)} records")
 
-# ── Farm Registrations Table ──────────────────────────
 st.subheader("📋 Farm Registrations")
 st.caption("👆 Click any row to instantly view full farm profile below")
 
@@ -171,7 +165,6 @@ selected = st.dataframe(
     selection_mode="single-row",
 )
 
-# ── Auto-open Farm Profile on single row click ────────
 selected_rows = selected.selection.rows if selected.selection else []
 if selected_rows:
     st.session_state['view_farmer_idx'] = selected_rows[0]
@@ -182,17 +175,17 @@ if 'view_farmer_idx' in st.session_state:
     row_idx = st.session_state['view_farmer_idx']
     if row_idx < len(filtered):
         farmer_display = filtered.iloc[row_idx]
-        farmer_name    = clean(farmer_display.get('Farmer Name', 'Unknown'))
-        orig_pos       = int(farmer_display['_orig_pos'])
-        raw_row        = df_indexed.iloc[orig_pos]
+        farmer_name = clean(farmer_display.get('Farmer Name', 'Unknown'))
+        orig_pos = int(farmer_display['_orig_pos'])
+        raw_row = df_indexed.iloc[orig_pos]
 
         st.markdown("---")
         st.subheader(f"🌾 Farm Profile — {farmer_name}")
 
         i1, i2, i3, i4 = st.columns(4)
-        i1.metric("Village",   clean(farmer_display.get('Village','—')))
-        i2.metric("Acres",     clean(farmer_display.get('Acres','—')))
-        i3.metric("Method",    clean(farmer_display.get('Method','—')))
+        i1.metric("Village", clean(farmer_display.get('Village','—')))
+        i2.metric("Acres", clean(farmer_display.get('Acres','—')))
+        i3.metric("Method", clean(farmer_display.get('Method','—')))
         i4.metric("Ownership", clean(farmer_display.get('Ownership','—')))
 
         left, right = st.columns([1, 1.5])
@@ -200,28 +193,29 @@ if 'view_farmer_idx' in st.session_state:
         with left:
             st.markdown("##### 👤 Farmer Details")
             for k, v in {
-                "📞 Phone":      clean(farmer_display.get('Phone','—')),
-                "🎂 Age":        clean(farmer_display.get('Age','—')),
-                "🎓 Education":  clean(farmer_display.get('Education','—')),
+                "📞 Phone": clean(farmer_display.get('Phone','—')),
+                "🎂 Age": clean(farmer_display.get('Age','—')),
+                "🎓 Education": clean(farmer_display.get('Education','—')),
                 "👷 Enumerator": clean(farmer_display.get('Enumerator','—')),
-                "📅 Date":       clean(farmer_display.get('Date','—')),
-                "🕐 Submitted":  clean(farmer_display.get('Submitted At','—')),
+                "📅 Date": clean(farmer_display.get('Date','—')),
+                "🕐 Submitted": clean(farmer_display.get('Submitted At','—')),
             }.items():
-                st.markdown(f"**{k}:** {v}")
+                if v != '—':
+                    st.markdown(f"**{k}:** {v}")
 
             st.markdown("##### 🔧 Tubewell Details")
             hp1, mm1 = parse_pump(clean(raw_row.get('Tubewells/pump1','—')))
             hp2, mm2 = parse_pump(clean(raw_row.get('Tubewells/pump2','—')))
             for k, v in {
-                "🔧 No. Tubewells":  clean(raw_row.get('Tubewells/Tubewells_001','—')),
-                "⚙️ Horsepower 1":   hp1,
-                "📏 Delivery MM 1":  mm1,
-                "📐 Bore Depth 1":   clean(raw_row.get('Tubewells/BD1','—')) + " ft",
-                "⚙️ Horsepower 2":   hp2,
-                "📏 Delivery MM 2":  mm2,
-                "📐 Bore Depth 2":   clean(raw_row.get('Tubewells/BD2','—')) + " ft",
-                "💦 Water Level":    clean(raw_row.get('GWL_001/GWL','—')) + " ft",
-                "🤝 Tube Share":     clean(raw_row.get('GWL_001/Tubeshare','—')),
+                "🔧 No. Tubewells": clean(raw_row.get('Tubewells/Tubewells_001','—')),
+                "⚙️ Horsepower 1": hp1,
+                "📏 Delivery MM 1": mm1,
+                "📐 Bore Depth 1": clean(raw_row.get('Tubewells/BD1','—')) + " ft",
+                "⚙️ Horsepower 2": hp2,
+                "📏 Delivery MM 2": mm2,
+                "📐 Bore Depth 2": clean(raw_row.get('Tubewells/BD2','—')) + " ft",
+                "💦 Water Level": clean(raw_row.get('GWL_001/GWL','—')) + " ft",
+                "🤝 Tube Share": clean(raw_row.get('GWL_001/Tubeshare','—')),
             }.items():
                 if '—' not in v:
                     st.markdown(f"**{k}:** {v}")
@@ -229,81 +223,39 @@ if 'view_farmer_idx' in st.session_state:
         with right:
             st.markdown("##### 🗺️ Farm Location")
 
-            name_r      = clean(raw_row.get('Demography/Namefarmer'))
-            phone_r     = clean(raw_row.get('Demography/phnofarmer'))
-            age_r       = clean(raw_row.get('Demography/agefarmer'))
-            acres_r     = clean(raw_row.get('Facres/Acres'))
-            village_r   = clean(raw_row.get('inthebeginning/Village'))
+            name_r = clean(raw_row.get('Demography/Namefarmer'))
+            phone_r = clean(raw_row.get('Demography/phnofarmer'))
+            age_r = clean(raw_row.get('Demography/agefarmer'))
+            acres_r = clean(raw_row.get('Facres/Acres'))
+            village_r = clean(raw_row.get('inthebeginning/Village'))
             ownership_r = clean(raw_row.get('Acerage/Own'))
-            method_r    = clean(raw_row.get('Consent/TPR_DSR'))
-            pump_r      = clean(raw_row.get('Tubewells/pump1'))
-            bd_r        = clean(raw_row.get('Tubewells/BD1'))
-            gwl_r       = clean(raw_row.get('GWL_001/GWL'))
-            hp_r, mm_r  = parse_pump(pump_r)
+            method_r = clean(raw_row.get('Consent/TPR_DSR'))
+            pump_r = clean(raw_row.get('Tubewells/pump1'))
+            bd_r = clean(raw_row.get('Tubewells/BD1'))
+            gwl_r = clean(raw_row.get('GWL_001/GWL'))
+            hp_r, mm_r = parse_pump(pump_r)
 
             poly_str = raw_row.get('Poly1/map1') or raw_row.get('Poly2/map2') or raw_row.get('Poly3/map3')
-            points   = parse_polygon(poly_str)
-            tw_loc   = parse_point(raw_row.get('LocateTubewell/Tubeloc'))
+            points = parse_polygon(poly_str)
+            tw_loc = parse_point(raw_row.get('LocateTubewell/Tubeloc'))
 
             if points:
-                ctr = [sum(p[0] for p in points)/len(points),
-                       sum(p[1] for p in points)/len(points)]
+                ctr = [sum(p[0] for p in points)/len(points), sum(p[1] for p in points)/len(points)]
             elif tw_loc:
                 ctr = tw_loc
             else:
                 ctr = [30.7, 76.7]
 
             mini_m = folium.Map(location=ctr, zoom_start=16, tiles=None)
-            folium.TileLayer(
-                "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-                attr="CARTO", name="🗺️ Street"
-            ).add_to(mini_m)
-            folium.TileLayer(
-                "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-                attr="Google", name="🛰️ Satellite",
-                subdomains=["0","1","2","3"], max_zoom=21
-            ).add_to(mini_m)
+            folium.TileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", attr="CARTO", name="🗺️ Street").add_to(mini_m)
+            folium.TileLayer("https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr="Google", name="🛰️ Satellite", subdomains=["0","1","2","3"], max_zoom=21).add_to(mini_m)
             folium.LayerControl(position="topright", collapsed=False).add_to(mini_m)
 
-            # ── Tubewell popup ────────────────────────
-            tw_popup_html = f"""
-            <div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
-                <div style="background:#1d3557;color:white;padding:8px 12px">
-                    <b style="font-size:13px">🔧 Tubewell</b>
-                </div>
-                <div style="padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none">
-                    <table style="width:100%;border-collapse:collapse">
-                        <tr><td style="color:#666;padding:3px 0;width:50%">👤 Farmer</td><td><b>{name_r}</b></td></tr>
-                        <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td>{acres_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">📍 Village</td><td>{village_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{hp_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{mm_r}</td></tr>
-                        <tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr>
-                        <tr><td style="color:#666;padding:3px 0">💦 Water Level</td><td>{gwl_r} ft</td></tr>
-                    </table>
-                </div>
-            </div>"""
+            poly_popup_html = f"""<div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)"><div style="background:#2d6a4f;color:white;padding:8px 12px"><b style="font-size:13px">🌾 {name_r}</b></div><div style="padding:10px 12px;background:#f9f9f9;border:1px solid #ddd;border-top:none"><table style="width:100%;border-collapse:collapse"><tr><td style="color:#666;padding:3px 0;width:45%">📍 Village</td><td><b>{village_r}</b></td></tr><tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr><tr><td style="color:#666;padding:3px 0">🎂 Age</td><td>{age_r}</td></tr><tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td><b>{acres_r}</b></td></tr><tr><td style="color:#666;padding:3px 0">🏠 Ownership</td><td>{ownership_r}</td></tr><tr><td style="color:#666;padding:3px 0">💧 Method</td><td><b style="color:#2d6a4f">{method_r}</b></td></tr></table></div></div>"""
 
-# ── Draw polygon — with correct popup ────
-poly_popup_html = f"""
-<div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
-    <div style="background:#2d6a4f;color:white;padding:8px 12px">
-        <b style="font-size:13px">🌾 {name_r}</b>
-    </div>
-    <div style="padding:10px 12px;background:#f9f9f9;border:1px solid #ddd;border-top:none">
-        <table style="width:100%;border-collapse:collapse">
-            <tr><td style="color:#666;padding:3px 0;width:45%">📍 Village</td><td><b>{village_r}</b></td></tr>
-            <tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr>
-            <tr><td style="color:#666;padding:3px 0">🎂 Age</td><td>{age_r}</td></tr>
-            <tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td><b>{acres_r}</b></td></tr>
-            <tr><td style="color:#666;padding:3px 0">🏠 Ownership</td><td>{ownership_r}</td></tr>
-            <tr><td style="color:#666;padding:3px 0">💧 Method</td><td><b style="color:#2d6a4f">{method_r}</b></td></tr>
-        </table>
-    </div>
-</div>"""
+            tw_popup_html = f"""<div style="font-family:Arial,sans-serif;width:220px;font-size:12px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.2)"><div style="background:#1d3557;color:white;padding:8px 12px"><b style="font-size:13px">🔧 Tubewell</b></div><div style="padding:10px 12px;background:#f0f6ff;border:1px solid #cce0ff;border-top:none"><table style="width:100%;border-collapse:collapse"><tr><td style="color:#666;padding:3px 0;width:50%">👤 Farmer</td><td><b>{name_r}</b></td></tr><tr><td style="color:#666;padding:3px 0">📞 Phone</td><td>{phone_r}</td></tr><tr><td style="color:#666;padding:3px 0">🌾 Acres</td><td>{acres_r}</td></tr><tr><td style="color:#666;padding:3px 0">📍 Village</td><td>{village_r}</td></tr><tr><td style="color:#666;padding:3px 0">⚙️ Horsepower</td><td>{hp_r}</td></tr><tr><td style="color:#666;padding:3px 0">📏 Delivery MM</td><td>{mm_r}</td></tr><tr><td style="color:#666;padding:3px 0">📐 Bore Depth</td><td><b>{bd_r} ft</b></td></tr><tr><td style="color:#666;padding:3px 0">💦 Water Level</td><td>{gwl_r} ft</td></tr></table></div></div>"""
 
-if points:
+            if points:
                 folium.Polygon(
                     locations=points,
                     color='#2d6a4f', fill=True,
@@ -318,7 +270,6 @@ if points:
             else:
                 st.caption("📍 No polygon data for this farm")
 
-            # ── Draw tubewell — with popup ─────────────
             if tw_loc:
                 folium.Marker(
                     location=tw_loc,
@@ -333,8 +284,7 @@ if points:
             skip = {'_attachments','_geolocation','_notes','_tags',
                     '_validation_status','formhub/uuid','meta/instanceID',
                     'meta/rootUuid','meta/deprecatedID','__version__',
-                    '_xform_id_string','_uuid','_submitted_by','_status',
-                    '_orig_pos'}
+                    '_xform_id_string','_uuid','_submitted_by','_status','_orig_pos'}
             all_data = {col: clean(raw_row.get(col,''))
                         for col in df_indexed.columns
                         if col not in skip and clean(raw_row.get(col,'')) != '—'}
@@ -345,7 +295,6 @@ if points:
 
 st.markdown("---")
 
-# ── Download ──────────────────────────────────────────
 st.subheader("⬇️ Download Data")
 dtab1, dtab2 = st.tabs(["📋 Key Columns (11)", "📦 Full Data (All Columns)"])
 with dtab1:
