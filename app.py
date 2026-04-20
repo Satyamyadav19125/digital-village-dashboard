@@ -304,13 +304,13 @@ poly_popup_html = f"""
 </div>"""
 
 if points:
-    folium.Polygon(
-        locations=points,
-        color='#2d6a4f', fill=True,
-        fill_color='#52b788', fill_opacity=0.5, weight=3,
-        popup=folium.Popup(poly_popup_html, max_width=240),
-        tooltip=f"🌾 {name_r} | {village_r} | {acres_r} ac | {method_r}"
-    ).add_to(mini_m)
+                folium.Polygon(
+                    locations=points,
+                    color='#2d6a4f', fill=True,
+                    fill_color='#52b788', fill_opacity=0.5, weight=3,
+                    popup=folium.Popup(poly_popup_html, max_width=240),
+                    tooltip=f"🌾 {name_r} | {village_r} | {acres_r} ac | {method_r}"
+                ).add_to(mini_m)
                 mini_m.fit_bounds([
                     [min(p[0] for p in points), min(p[1] for p in points)],
                     [max(p[0] for p in points), max(p[1] for p in points)]
